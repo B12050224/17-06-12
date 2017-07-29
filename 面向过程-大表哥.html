@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>大表哥</title>
+    <link rel="stylesheet" type="text/css" href="table.css">
+</head>
+<body>
+<div id="list">
+</div>
+</body>
+<script>
+    //数据要在表格中展示，首先在页面中创建表格
+    var table=document.createElement("table"),
+         thead=document.createElement("thead"), //表头标签，这里的数据显示对象的属性名
+         tbody=document.createElement("tbody");//表体标签，这里显示对象的属性值
+    table.className='grid-table';
+    var tr, // 行
+            th, // 表头列
+            td; // 数据列
+    //创建对象，用于接收data.json中的数据
+    var xhr=XMLHttpRequest ?
+            new XMLHttpRequest():
+            new ActiveXObject( 'XMLHTTP' ); //这里是解决关于IE浏览器的兼容问题
+    //调用open方法
+    xhr.open("get","data.json",true);//这里true是用来表示是异步请求还是同步请求，不写的话默认是异步请求
+
+    //状态监测事件
+
+    xhr.onreadystatechange=function(){
+        var readystate = xhr.readyState;
+        var status = xhr.status;
+        if (readystate == 4) {
+            // http状态码 以2--开头都表示成功，304 表示从服务器缓存读取数据。
+            if (status >= 200 && status < 300 || status == 304) {
+                var data=JSON.parse(xhr.responseText);//xhr.responseText
+                console.log(xhr.responseText);//通过打印可以清楚地看到这是一个字符串，但是操作的时候要
+                //转换为对象操作，所以用到了JSON.parse()方法
+
+                console.log(data); //通过打印可以清楚地看到这是一个数组，[Object, Object, Object, Object]
+                //里面是4个对象
+                //首先把数据显示的表头显示对象的属性名
+                var tr=document.createElement("tr");
+
+                var obj=data[0];
+                for(var k in obj){
+                    var th=document.createElement("th");
+                    th.innerHTML=k;
+                    tr.appendChild(th);
+                }
+                thead.appendChild(tr);
+                //创建表体
+
+                for(var i=0;i<data.length;i++){
+                    var tr=document.createElement("tr");
+                    var obj=data[i];
+                    for(var k in obj){
+                        var td=document.createElement("td");
+                        td.innerHTML=obj[k];
+                        tr.appendChild(td);
+//                        tbody.appendChild(tr);
+                    }
+                    tbody.appendChild(tr);
+                }
+                table.appendChild( thead );
+                // 5.2 将tbody添加给table标签
+                table.appendChild( tbody );
+                // 5.3 将table标签添加目标dom元素上
+                document.querySelector( '#list' ).appendChild( table );
+            }else{
+                console.log( '请求数据失败.' );
+            }
+        }
+    };
+    // 2.4 发送请求
+    xhr.send();
+</script>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>03-面向对象实现大表哥</title>
+    <link rel="stylesheet" type="text/css" href="table.css">
+</head>
+<body>
+    <!--<form>
+        <input type="text" name="name" value="guoguo">
+        <button type="submit">提交</button>
+    </form>-->
+    <div id="list">
+    </div>
+    <script>
+        // 构造函数
+        function Table( target, url, tableClass, type, async, data ){
+            // Table对象属性
+            this.target = target;
+            this.url = url || location.href;
+            this.tableClass = tableClass || 'grid-table';//下文未输入tableClass的值，所以默认传的值是grid-table
+            this.type = type || 'get';
+            this.async = async || true;
+            this.data = data || '';
+            // Table对象方法
+            this.load = function(){   //这个函数完成四个基本步骤，下面的函数都是为这个函数服务的
+                var self = this;    //this就是Table
+                console.log(this);  //这里打印出来的是Table
+                // console.log(this.instanceof());
+                var xhr = this.createRequest();  //第一步：这里调用这个函数完成新建对象的任务并且具备解决兼容性的问题
+                xhr.open( this.type, this.url, this.async );//第二步：打开连接，这里三个参数是是请求方式，要打开的json路径，请求的方式
+                //是异步请求还是同步请求，默认是异步请求
+                console.log( this );//这里打印出来的是Table
+                xhr.onreadystatechange = function(){ //第三步：状态改变，触发事件
+                    var state = xhr.readyState, //根据状态判定是否执行以下代码
+                        status = xhr.status;
+
+                    if( state == 4 ){
+                        if( status >= 200 && status < 300 || status == 304 ){
+                            // 请求成功后，拿到服务器响应的数据，转换成对象，
+                            //   并添加给Table对象的tableData属性，在去调用draw方法绘制表格
+                            // console.log( this );
+                            self.tableData = JSON.parse( xhr.responseText ); //因为这里要用到Table,而此处this指向xhr，所以要事先把Table用变量存储起来，从json文件中读取数据，并且
+                            //转化为 json对象格式用于下面操作，这里自定义了一个属性，接收这个对象
+                            console.log(self.tableData);//这里已经转换成object对象数组
+                            self.draw();//这里调用draw方法，显示出表格中的数据
+                        } else {
+                            alert( '请求数据失败.' );
+                        }
+                    }
+                };
+                xhr.send();  //第四步：发送请求，因为不知道是异步还是同步，为防止出错，所以放在最后
+            };
+            this.draw = function(){
+                console.log(this);//这里的this也是一个table对象
+                var table = document.createElement( 'table' );//实例对象，用于渲染数据
+                table.className = this.tableClass;//未输入tableClass的值，所以默认传的值是grid-table
+                console.log(this.tableClass);
+                table.appendChild( this.drawHead() );//加入表头
+                table.appendChild( this.drawBody() );//加入表体
+                document.querySelector( this.target ).appendChild( table );//这里的target是body中的div，在div中显示table
+            };
+            this.drawHead = function(){ //这个函数实现表头的数据的渲染
+                var thead = document.createElement( 'thead' ),//建立表头
+                    tr = document.createElement( 'tr' ),//新建一行
+                    th;//新建列
+
+                var k, obj;
+
+                obj = this.tableData[ 0 ]; //这里未必是要是0，只要在数组长度范围内都可以，因为表格的首行
+                //取得仅仅是属性名，然后显示在对应的列上面
+
+                console.log(obj);
+
+                for( k in obj ){
+                    th = document.createElement( 'th' ); //随着循环新建列，有多少个属性名就有多少个列
+                    th.innerHTML = k;//把属性名赋值给新建的列
+                    tr.appendChild( th );//把这些列赋值给首行
+                }
+                thead.appendChild( tr );//把首行给表头
+
+                return thead;//得到函数的返回值
+            };
+            this.drawBody = function(){
+                var data = this.tableData;//这里要获得转化过对象数组
+                console.log(data);
+                var tbody =document.createElement( 'tbody' ),//建表体
+                    tr,//建行
+                    td;//建列
+
+                var i = 0,
+                    l = data.length,//得到data数组的长度
+                    k,
+                    obj;
+
+                for( ; i < l; i++ ){//枚举数组对象
+                    obj = data[ i ];
+                    tr = document.createElement( 'tr' );//每有一个对象就要有一行来保存这个对象的数据
+                    for( k in obj ){
+                        td = document.createElement( 'td' );//有多少个属性名就有多少个列
+                        td.innerHTML = obj[ k ];//列里面对应显示属性值
+                        tr.appendChild( td );//把这些列保存到行中，一个对象就有一行
+                    }
+                    tbody.appendChild( tr );//把行保存在表体中去
+                }
+
+                return tbody;//得到这个方法的返回值
+            };
+            this.createRequest = function(){//这里是创建一个对象XMLHttpRequest，并且具备兼容IE浏览器的能力
+                return XMLHttpRequest ?
+                    new XMLHttpRequest() :
+                    new ActiveXObject( 'XMLHTTP' );
+            };
+        }
+        // 工厂函数
+        function table( target, url, tableClass, type, async, data ){//利用工厂函数实例对象
+            // 过滤无效参数
+            // 如果使用者没有传入参数，就不能创建Table对象
+            if( !target ){//target对象是一个必备参数，如没有这个参数直接返回，不再执行
+                return null;
+            }
+
+            return new Table( target, url, tableClass, type, async, data );//有了这个参数之后实例对象
+        }
+        var t = table( '#list', 'data.json' );//调用table函数，传参得到一个table对象
+        t.load();//用上面实例的对象调用load方法，load方法调用上面的几个方法渲染表格
+    </script>
+</body>
+</html>
